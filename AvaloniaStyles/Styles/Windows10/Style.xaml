@@ -14,6 +14,7 @@
         <StyleInclude Source="avares://AvaloniaStyles/Controls/GridViewStyle.axaml" />
         <StyleInclude Source="avares://AvaloniaStyles/Controls/GroupingListBox.axaml" />
         <StyleInclude Source="avares://AvaloniaStyles/Controls/WizardPanel.axaml" />
+        <StyleInclude Source="avares://AvaloniaStyles/Controls/DropDownButton.axaml" />
         
         <!--<StyleInclude Source="avares://AvaloniaStyles/Styles/Windows10/TabStrip.xaml" />-->
         <StyleInclude Source="avares://AvaloniaStyles/Styles/Windows10/NativeMenuBar.xaml" />
@@ -31,4 +32,5 @@
         <StyleInclude Source="avares://AvaloniaStyles/Styles/Windows10/GroupingListBox.axaml" />
         <StyleInclude Source="avares://AvaloniaStyles/Styles/Windows10/TeachingTip.axaml" />
         <StyleInclude Source="avares://AvaloniaStyles/Styles/Windows10/TreeViewItem.axaml" />
+        <StyleInclude Source="avares://AvaloniaStyles/Styles/Windows10/ToolbarPanel.axaml" />
 </Styles>

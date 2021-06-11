@@ -30,6 +30,7 @@ using WoWDatabaseEditorCore.CoreVersion;
 using WoWDatabaseEditorCore.Services.FileSystemService;
 using WoWDatabaseEditorCore.Services.UserSettingsService;
 using WoWDatabaseEditorCore.ModulesManagement;
+using WoWDatabaseEditorCore.Services.DebugConsole;
 using WoWDatabaseEditorCore.ViewModels;
 
 namespace WoWDatabaseEditorCore.Avalonia
@@ -226,8 +227,24 @@ namespace WoWDatabaseEditorCore.Avalonia
             var loadedModules = Container.Resolve<IEnumerable<ModuleBase>>();
             foreach (var module in loadedModules)
                 module.FinalizeRegistration((IContainerRegistry)Container);
+
+            Container.Resolve<IDebugConsole>();
             
             var themeManager = Container.Resolve<IThemeManager>();
+            ViewBind.AppViewLocator = Container.Resolve<IViewLocator>();
+
+            IMessageBoxService messageBoxService = Container.Resolve<IMessageBoxService>();
+            ViewBind.AppViewLocator = Container.Resolve<IViewLocator>();
+        }
+
+        public static Window? MainApp;
+
+        public override void Initialize()
+        {
+            base.Initialize();
+            AvaloniaXamlLoader.Load(this);
+            
+            
             if (AvaloniaThemeStyle.UseDock)
             {
                 ((IContainerRegistry)Container).RegisterSingleton<MainWindowWithDocking>();
@@ -238,23 +255,9 @@ namespace WoWDatabaseEditorCore.Avalonia
                 ((IContainerRegistry)Container).RegisterSingleton<MainWindow>();
                 MainApp = Container.Resolve<MainWindow>();
             }
-            
-            ViewBind.AppViewLocator = Container.Resolve<IViewLocator>();
             MainApp.DataContext = Container.Resolve<MainWindowViewModel>();
             this.InitializeShell(MainApp);
-            
-            IMessageBoxService messageBoxService = Container.Resolve<IMessageBoxService>();
-            ViewBind.AppViewLocator = Container.Resolve<IViewLocator>();
-            var primaryScreen = MainApp.Screens.Primary ?? MainApp.Screens.All.FirstOrDefault();
-            GlobalApplication.HighDpi = (primaryScreen?.PixelDensity ?? 1) > 1.5f;
-        }
 
-        public static Window? MainApp;
-
-        public override void Initialize()
-        {
-            base.Initialize();
-            AvaloniaXamlLoader.Load(this);
             
             IEventAggregator? eventAggregator = Container.Resolve<IEventAggregator>();
             eventAggregator.GetEvent<AllModulesLoaded>().Publish();
