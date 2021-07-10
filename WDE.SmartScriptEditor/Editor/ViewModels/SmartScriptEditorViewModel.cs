@@ -1300,7 +1300,8 @@ namespace WDE.SmartScriptEditor.Editor.ViewModels
 
                 // kinda hack to show actions with NONE source with user pick SELF source
                 // because it is natural for users to use SELF source for those actions
-                return actionImplicitSource == SmartConstants.SourceNone && sourceId == SmartConstants.SourceSelf;
+                return actionImplicitSource == SmartConstants.SourceNone && sourceId == SmartConstants.SourceSelf ||
+                       actionImplicitSource == SmartConstants.SourceNone && sourceId == 56;
             }
             else
             {
