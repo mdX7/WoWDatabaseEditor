@@ -1,0 +1,85 @@
+name: WPP
+
+on:
+  push:
+  pull_request:
+
+env:
+  DOTNET_VERSION: '6.0.x'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest]
+        configuration: [Release]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Install .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    - name: Pull submodules
+      run: git submodule update --init --recursive
+
+    - name: Publish LoaderAvalonia
+      run: |
+       dotnet publish -c Release --self-contained false -f net6.0 -o bin/wowdatabaseeditor-avalonia-win/ LoaderAvalonia/LoaderAvalonia.csproj -r win8-x64 -p:PublishSingleFile=true -p:PublishTrimmed=false -p:DebugType=none
+       dotnet publish -c Release --self-contained false -f net6.0 -o bin/wowdatabaseeditor-avalonia-mac/ LoaderAvalonia/LoaderAvalonia.csproj -r osx-x64
+       dotnet publish -c Release --self-contained false -f net6.0 -o bin/wowdatabaseeditor-avalonia-linux/ LoaderAvalonia/LoaderAvalonia.csproj -r linux-x64 -p:PublishSingleFile=true -p:PublishTrimmed=false -p:DebugType=none
+
+    - name: Publish Updater
+      run: |
+       dotnet publish -c Release --self-contained false -f net6.0 -o bin/wowdatabaseeditor-avalonia-win/ Updater/Updater.csproj -r win8-x64 -p:PublishSingleFile=true -p:PublishTrimmed=false -p:DebugType=none
+       dotnet publish -c Release --self-contained false -f net6.0 -o bin/wowdatabaseeditor-avalonia-mac/ Updater/Updater.csproj -r osx-x64
+       dotnet publish -c Release --self-contained false -f net6.0 -o bin/wowdatabaseeditor-avalonia-linux/ Updater/Updater.csproj -r linux-x64 -p:PublishSingleFile=true -p:PublishTrimmed=false -p:DebugType=none
+       rename bin\wowdatabaseeditor-avalonia-mac\Updater _Updater
+       rename bin\wowdatabaseeditor-avalonia-linux\Updater _Updater
+       rename bin\wowdatabaseeditor-avalonia-win\Updater.exe _Updater.exe
+
+    - name: Publish WPP Loader
+      run: |
+       dotnet publish -c Release --self-contained false -f net6.0 -o bin/wowdatabaseeditor-avalonia-win/parser WoWPacketParserLoader -r win8-x64
+       dotnet publish -c Release --self-contained false -f net6.0 -o bin/wowdatabaseeditor-avalonia-mac/parser WoWPacketParserLoader -r osx-x64
+       dotnet publish -c Release --self-contained false -f net6.0 -o bin/wowdatabaseeditor-avalonia-linux/parser WoWPacketParserLoader -r linux-x64
+
+    - name: Publish Modules
+      run: |
+       cd ../
+       mkdir modules
+       dotnet publish WDE.Github/WDE.Github.csproj -o modules/ -c Release -f net6.0
+       cp modules/WDE.Github.dll ../bin/wowdatabaseeditor-avalonia-win/WDE.Github.dll
+       cp modules/WDE.Github.dll ../bin/wowdatabaseeditor-avalonia-mac/WDE.Github.dll
+       cp modules/WDE.Github.dll ../bin/wowdatabaseeditor-avalonia-linux/WDE.Github.dll
+
+    - name: Move WowPacketParser
+      run: |
+       FOR %%A IN (bin\wowdatabaseeditor-avalonia-win\parser,bin\wowdatabaseeditor-avalonia-mac\parser,bin\wowdatabaseeditor-avalonia-linux\parser) DO ( mkdir %%A\Parsers & cd %%A & ( FOR %%X in (WowPacketParserModule.*) DO ( move %%X Parsers\%%X ) ) & cd ..\..\..\ )
+      
+    - name: Download third party libs
+      run: |
+       curl -fsSL -o bin/wowdatabaseeditor-avalonia-win/storm.dll https://github.com/BAndysc/StormCascLibBinary/releases/download/windows/StormLib.dll
+       curl -fsSL -o bin/wowdatabaseeditor-avalonia-win/casc.dll https://github.com/BAndysc/StormCascLibBinary/releases/download/windows/CascLib.dll
+       curl -fsSL -o bin/wowdatabaseeditor-avalonia-linux/libstorm.so https://github.com/BAndysc/StormCascLibBinary/releases/download/linux/libstorm.so
+       curl -fsSL -o bin/wowdatabaseeditor-avalonia-linux/libcasc.so https://github.com/BAndysc/StormCascLibBinary/releases/download/linux/libcasc.so
+      
+    - name: Do Mac Stuff
+      run: |
+       mkdir "WoW Database Editor.app"
+       mkdir "WoW Database Editor.app\Contents"
+       mkdir "WoW Database Editor.app\Contents\MacOS"
+       mkdir "WoW Database Editor.app\Contents\Resources"
+       copy WoWDatabaseEditorCore.Avalonia\Resources\Info.plist "WoW Database Editor.app\Contents"
+       copy WoWDatabaseEditorCore.Avalonia\Resources\icon.icns "WoW Database Editor.app\Contents\Resources"
+       move bin\wowdatabaseeditor-avalonia-mac\* "WoW Database Editor.app\Contents\MacOS"
+       for /d %%a in (bin\wowdatabaseeditor-avalonia-mac\*) do move "%%~fa" "WoW Database Editor.app\Contents\MacOS"
+      
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: WPP-${{ matrix.os }}-${{ matrix.configuration }}
+        path: bin/wowdatabaseeditor-avalonia-win/
