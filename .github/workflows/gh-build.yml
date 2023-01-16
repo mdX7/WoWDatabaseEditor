@@ -1,4 +1,4 @@
-name: WPP
+name: WoWDatabaseEditor
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest]
+        os: [win8-x64]
         configuration: [Release]
 
     runs-on: ${{ matrix.os }}
